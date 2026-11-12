@@ -1,3 +1,4 @@
+
 let JWKS;
 
 const verifyToken = async (req, res, next) => {
@@ -12,19 +13,23 @@ const verifyToken = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    // Load jose and initialize the public key set
+    const authURL = process.env.BETTER_AUTH_URL;
+
+    if (!authURL) {
+      throw new Error("BETTER_AUTH_URL is missing.");
+    }
+
     const { createRemoteJWKSet, jwtVerify } = await import("jose");
 
     if (!JWKS) {
       JWKS = createRemoteJWKSet(
-        new URL("http://localhost:3000/api/auth/jwks")
+        new URL(`${authURL}/api/auth/jwks`)
       );
     }
 
-    // Verify the Better Auth JWT
     const { payload } = await jwtVerify(token, JWKS, {
-      issuer: "http://localhost:3000",
-      audience: "http://localhost:3000",
+      issuer: authURL,
+      audience: authURL,
     });
 
     if (!payload.email) {
